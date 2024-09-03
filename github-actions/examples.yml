@@ -1,0 +1,89 @@
+name: Using Secrets # Useful if you need to use passwords/certificates in the workflow: https://docs.github.com/en/actions/security-for-github-actions/security-guides/using-secrets-in-github-actions
+run-name: ${{ github.actor }} is using secrets!~
+on: [push]
+jobs:
+  example-job:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Retrieve secret
+      env:
+        super_secret: ${{ secrets.SUPERSECRET }}
+      run: |
+        example-command "$super_secret"
+
+name: Dependent Jobs # https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/using-jobs-in-a-workflow#defining-prerequisite-jobs
+run-name: ${{ github.actor }} has some dependencies to deal with
+on: [push]
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    steps:
+      - run: ./setup_server.sh
+  build:
+    needs: setup # this job won't run unless setup has run successfully
+    runs-on: ubuntu-latest
+    steps:
+      - run: ./build_server.sh
+  test:
+    needs: build # this job won't run unless build has run successfully
+    runs-on: ubuntu-latest
+    steps:
+      - run: ./test_server.sh
+  regardless: # this job will run once setup, build and test have run regardless of their successes
+    if: ${{ always() }}
+    needs: [setup, build, test]
+    steps:
+      -run: echo "I'll always be here for you"
+
+name: Matrix Strategy # https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/running-variations-of-jobs-in-a-workflow
+run-name: ${{ github.actor }} is pulling a Neo
+on: [push]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node: [14, 16]
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+
+name: Caching dependencies # https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/caching-dependencies-to-speed-up-workflows
+run-name: ${{ github.actor }} is dependent on you!
+on: [push]
+jobs:
+  example-job:
+    steps:
+      - name: Cache node modules
+        uses: actions/cache@v3
+        env:
+          cache-name: cache-node-modules
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-build-${{ env.cache-name }}-
+
+name: Using databases and service containers # https://docs.github.com/en/actions/use-cases-and-examples/using-containerized-services
+run-name: ${{ github.actor }} needs some extra info
+on: [push]
+jobs:
+  container-job:
+    runs-on: ubuntu-latest
+    container: node:10.18-jessie
+    services:
+      postgres:
+        image: postgres
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4
+      - name: Install dependencies
+        run: npm ci
+      - name: Connect to PostgreSQL
+        run: node client.js
+        env:
+          POSTGRES_HOST: postgres
+          POSTGRES_PORT: 5432
+
+# for all the options for events: https://docs.github.com/en/actions/writing-workflows/choosing-when-your-workflow-runs/events-that-trigger-workflows
