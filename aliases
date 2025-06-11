@@ -1,0 +1,4 @@
+# Google cloud aliases
+alias gclogin="gcloud auth login && gcloud auth application-default login"
+# nf-core aliases
+alias nf-core="docker run -itv `pwd`:`pwd` -w `pwd` nfcore/tools"
