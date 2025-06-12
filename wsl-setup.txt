@@ -5,7 +5,7 @@ sudo apt install curl unzip zip apt-transport-https ca-certificates gnupg git
 # install Java
 curl -s https://get.sdkman.io | bash
 source "/home/jreeve/.sdkman/bin/sdkman-init.sh"
-sdk install java 17.0.10-tem
+sdk install java
 
 # install Nextflow
 curl -s https://get.nextflow.io | bash
